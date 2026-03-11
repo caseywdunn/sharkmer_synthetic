@@ -59,6 +59,7 @@ download_nuclear_genome() {
     # Use awk to extract only records with headers starting with >NC_
     gunzip -c "$tmpfile" \
         | awk '/^>/{keep=/^>NC_/} keep' \
+        | awk '/^>/{print; next} {print toupper($0)}' \
         > "$outfile"
     rm "$tmpfile"
 
@@ -76,7 +77,9 @@ download_mt_genome() {
 
     log "Downloading mitochondrial genome (${MT_ACCESSION})"
     mkdir -p data
-    efetch -db nucleotide -id "$MT_ACCESSION" -format fasta > "$outfile"
+    efetch -db nucleotide -id "$MT_ACCESSION" -format fasta \
+        | awk '/^>/{print; next} {print toupper($0)}' \
+        > "$outfile"
     log "Mitochondrial genome saved to ${outfile}"
 }
 
