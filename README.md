@@ -26,11 +26,17 @@ if present. Safe to re-run after interruption.
 
 ## Mitochondrial variants
 
-To test sharkmer's ability to detect mutations, place patch files in `patch/`.
-Each `patch/<name>.patch` is applied to the original mt genome to produce a
-variant. Reads are simulated and analyzed independently for each variant.
+To test sharkmer's ability to detect mutations, create a `patches.tsv` file
+with three tab-separated columns (no header):
 
-If no patches are present, only the original mt genome is analyzed.
+```text
+variant_name    ORIGINAL_SEQUENCE    REPLACEMENT_SEQUENCE
+```
+
+Each row defines a variant by specifying a sequence to find in the mt genome and
+its replacement. Reads are simulated and analyzed independently for each variant.
+
+If `patches.tsv` is absent, only the original mt genome is analyzed.
 
 ## Output
 
@@ -39,7 +45,7 @@ Results are in `results/`, with one subdirectory per analysis:
 ```
 results/
 ├── original/       # nuclear + original mt
-└── <variant>/      # nuclear + variant mt (one per patch)
+└── <variant>/      # nuclear + variant mt (one per patches.tsv row)
 ```
 
 Each contains sharkmer amplicon assemblies (e.g., `16s.fasta`, `co1.fasta`)

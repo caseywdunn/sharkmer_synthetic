@@ -8,5 +8,6 @@ dependencies:
   - pip
   - entrez-direct
   - samtools
+  - mafft
   - pip:
     - insilicoseq

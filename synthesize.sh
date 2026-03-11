@@ -78,7 +78,7 @@ download_mt_genome() {
     log "Downloading mitochondrial genome (${MT_ACCESSION})"
     mkdir -p data
     efetch -db nucleotide -id "$MT_ACCESSION" -format fasta \
-        | awk '/^>/{print; next} {print toupper($0)}' \
+        | awk '/^>/{if(seq)print seq; print; seq=""; next} {seq=seq toupper($0)} END{if(seq)print seq}' \
         > "$outfile"
     log "Mitochondrial genome saved to ${outfile}"
 }
@@ -86,15 +86,16 @@ download_mt_genome() {
 # --- Step 4: Generate mitochondrial variants (conditional) -------------------
 
 generate_mt_variants() {
-    if [[ ! -d "patch" ]] || ! ls patch/*.patch &>/dev/null; then
-        log "No patch files found, skipping variant generation"
+    if [[ ! -f "patches.tsv" ]]; then
+        log "No patches.tsv found, skipping variant generation"
         return
     fi
 
     mkdir -p data
-    for patchfile in patch/*.patch; do
-        local name
-        name="$(basename "$patchfile" .patch)"
+    while IFS=$'\t' read -r name orig_seq replacement_seq; do
+        # Skip blank lines and comments
+        [[ -z "$name" || "$name" == \#* ]] && continue
+
         local outfile="data/Porites_lutea_mt_${name}.fna"
 
         if [[ -f "$outfile" ]]; then
@@ -102,11 +103,19 @@ generate_mt_variants() {
             continue
         fi
 
-        log "Generating variant '${name}' from ${patchfile}"
-        cp data/Porites_lutea_mt.fna "$outfile"
-        patch "$outfile" "$patchfile"
+        log "Generating variant '${name}' via sequence replacement"
+        awk -v orig="$orig_seq" -v repl="$replacement_seq" '
+            /^>/ { print; next }
+            { seq = seq $0 }
+            END {
+                gsub(orig, repl, seq)
+                # Wrap at 80 characters
+                for (i = 1; i <= length(seq); i += 80)
+                    print substr(seq, i, 80)
+            }
+        ' data/Porites_lutea_mt.fna > "$outfile"
         log "Variant saved to ${outfile}"
-    done
+    done < patches.tsv
 }
 
 # --- Step 5: Simulate nuclear reads ------------------------------------------
@@ -139,12 +148,11 @@ simulate_mt_reads() {
     _simulate_mt_reads_for "data/Porites_lutea_mt.fna" "mt_original"
 
     # Variant mt genomes
-    if [[ -d "patch" ]] && ls patch/*.patch &>/dev/null; then
-        for patchfile in patch/*.patch; do
-            local name
-            name="$(basename "$patchfile" .patch)"
+    if [[ -f "patches.tsv" ]]; then
+        while IFS=$'\t' read -r name _ _; do
+            [[ -z "$name" || "$name" == \#* ]] && continue
             _simulate_mt_reads_for "data/Porites_lutea_mt_${name}.fna" "mt_${name}"
-        done
+        done < patches.tsv
     fi
 }
 
@@ -179,12 +187,11 @@ run_sharkmer() {
     _run_sharkmer_for "original" "reads/mt_original_R1.fastq"
 
     # Variants
-    if [[ -d "patch" ]] && ls patch/*.patch &>/dev/null; then
-        for patchfile in patch/*.patch; do
-            local name
-            name="$(basename "$patchfile" .patch)"
+    if [[ -f "patches.tsv" ]]; then
+        while IFS=$'\t' read -r name _ _; do
+            [[ -z "$name" || "$name" == \#* ]] && continue
             _run_sharkmer_for "$name" "reads/mt_${name}_R1.fastq"
-        done
+        done < patches.tsv
     fi
 }
 
@@ -205,6 +212,44 @@ _run_sharkmer_for() {
     log "sharkmer results saved to ${outdir}/"
 }
 
+# --- Step 8: Compare 16S amplicons across variants --------------------------
+
+compare_16s() {
+    local outfile="results/compare_16s.fasta"
+    if [[ -f "$outfile" ]]; then
+        log "16S comparison already exists, skipping"
+        return
+    fi
+
+    log "Collecting 16S amplicon sequences"
+    local combined
+    combined=$(mktemp)
+
+    # Collect *_16S.fasta from each result directory, prefixing headers with label
+    for dir in results/*/; do
+        local label
+        label="$(basename "$dir")"
+        local fasta
+        fasta=$(ls "${dir}"*_16S.fasta 2>/dev/null | head -1)
+        if [[ -n "$fasta" ]]; then
+            sed "s/^>/>$label /" "$fasta" >> "$combined"
+        else
+            log "Warning: no 16S fasta in ${dir}, skipping"
+        fi
+    done
+
+    if [[ ! -s "$combined" ]]; then
+        log "No 16S sequences found, skipping comparison"
+        rm -f "$combined"
+        return
+    fi
+
+    log "Aligning 16S sequences with MAFFT"
+    mafft --auto "$combined" > "$outfile"
+    rm -f "$combined"
+    log "16S alignment saved to ${outfile}"
+}
+
 # --- Main --------------------------------------------------------------------
 
 main() {
@@ -218,6 +263,7 @@ main() {
     simulate_nuclear_reads
     simulate_mt_reads
     run_sharkmer
+    compare_16s
 
     log "Pipeline complete"
 }

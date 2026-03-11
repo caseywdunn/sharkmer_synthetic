@@ -27,13 +27,16 @@ produce single-end reads.
 |---|---|---|
 | Nuclear | 990,000 | From `Porites_lutea_nuclear.fna` |
 | Mitochondrial (original) | 10,000 | From `Porites_lutea_mt.fna` |
-| Mitochondrial (each variant) | 10,000 | From patched mt genomes, if patches exist |
+| Mitochondrial (each variant) | 10,000 | From variant mt genomes defined in `patches.tsv`, if present |
 
 ## Mitochondrial Variants
 
-If patch files are present in `patch/`, each is applied to the original mt
-genome to produce a variant. Each variant's reads are analyzed independently
-against sharkmer (see `docs/pipeline.md` for details).
+If `patches.tsv` exists, each row defines a variant by specifying a sequence to
+find in the mt genome and its replacement. The file has three tab-separated
+columns: variant name, original sequence, replacement sequence. Each variant's
+reads are analyzed independently against sharkmer (see `docs/pipeline.md` for
+details). The mt genome is stored as a single-line sequence (no line breaks
+within the sequence) to ensure reliable search-and-replace.
 
 ## sharkmer Analysis
 
@@ -46,6 +49,13 @@ cat nuclear_R1.fastq mt_R1.fastq | sharkmer --pcr cnidaria -s <sample_name> -o <
 
 The cnidarian panel targets five loci: 16s, co1, 18s, 28s, ITSfull.
 
+## 16S Comparison
+
+After sharkmer runs, the pipeline collects the `16s.fasta` amplicon from each
+result directory, labels each sequence with its sample name, and produces a
+multiple sequence alignment with MAFFT. The output is
+`results/compare_16s.fasta`.
+
 ## Directory Layout
 
 ```
@@ -56,7 +66,7 @@ sharkmer_synthetic/
 ├── docs/
 │   ├── overview.md          # this file
 │   └── pipeline.md          # step-by-step pipeline details
-├── patch/                   # optional: mt genome patch files
+├── patches.tsv              # optional: mt variant definitions (name, orig, replacement)
 ├── data/                    # downloaded/derived reference genomes
 │   ├── Porites_lutea_nuclear.fna
 │   ├── Porites_lutea_mt.fna
@@ -67,5 +77,6 @@ sharkmer_synthetic/
 │   └── mt_<variant>_R1.fastq
 └── results/                 # sharkmer output
     ├── original/            # nuclear + original mt
-    └── <variant>/           # nuclear + variant mt
+    ├── <variant>/           # nuclear + variant mt
+    └── compare_16s.fasta    # MAFFT alignment of 16S across all samples
 ```

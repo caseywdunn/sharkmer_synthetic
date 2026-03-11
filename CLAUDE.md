@@ -17,8 +17,9 @@ cnidarian primer panel.
 - **Conda env:** `sharkmer_synth` — created from `environment.yml`
 - **sharkmer** is assumed installed separately (not in conda env)
 - Read simulation uses InSilicoSeq NovaSeq model (150 bp); R2 is discarded
-- Mitochondrial variants are created by applying patches from `patch/` to the
-  original mt genome (if any patches exist)
+- Mitochondrial variants are defined in `patches.tsv` (tab-separated: name,
+  original sequence, replacement sequence). If the file is absent, no variants
+  are generated
 - Each mt source (original + variants) is analyzed independently with sharkmer
 
 ## Key Constants
