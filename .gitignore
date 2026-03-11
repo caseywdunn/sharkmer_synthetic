@@ -1,0 +1,8 @@
+# Downloaded and derived reference genomes
+data/
+
+# Simulated reads
+reads/
+
+# sharkmer output
+results/
