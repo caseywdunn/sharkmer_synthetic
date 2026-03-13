@@ -9,5 +9,6 @@ dependencies:
   - entrez-direct
   - samtools
   - mafft
+  - sharkmer
   - pip:
     - insilicoseq

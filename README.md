@@ -1,15 +1,12 @@
 # sharkmer Synthetic Read Test Framework
 
 Synthetic Illumina reads from *Porites lutea* nuclear and mitochondrial genomes
-to evaluate [sharkmer](https://github.com/caseywdunn/sharkmer) in silico PCR
+to evaluate [sharkmer](https://github.com/caseywdunn/sharkmer) in silico PCR (sPCR)
 with the cnidarian primer panel.
 
 ## Setup
 
-[sharkmer](https://github.com/caseywdunn/sharkmer) must be installed
-separately and available on `$PATH`.
-
-All other dependencies are managed by conda:
+All other dependencies including sharkmer are managed by conda:
 
 ```bash
 conda env create -f environment.yml
