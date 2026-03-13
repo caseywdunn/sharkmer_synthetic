@@ -87,14 +87,16 @@ Where `<source>` is `original` or the variant name, and `<sample_name>` matches
 - **Checkpoint:** Skip if `results/<source>/` directory exists and contains
   output files (e.g., `16s.fasta`).
 
-## Step 8: Compare 16S Amplicons
+## Step 8: Compare Amplicons
 
-Collect `*_16S.fasta` from each result directory (original + variants), prefix
-each FASTA header with the sample label, and align with
+Discover all gene amplicon FASTA files across result directories (original +
+variants). For each gene, collect all products (multiple products per gene are
+retained, differentiated by product index in the header), prefix each FASTA
+header with the sample label, and align with
 [MAFFT](https://mafft.cbrc.jp/alignment/software/) (`--auto`).
 
-- **Output:** `results/compare_16s.fasta` (multiple sequence alignment)
-- **Checkpoint:** Skip if `results/compare_16s.fasta` exists.
+- **Output:** `results/compare_<gene>.fasta` per gene (e.g., `compare_cnidaria_16S.fasta`)
+- **Checkpoint:** Skip per gene if `results/compare_<gene>.fasta` exists.
 
 ## Implementation Notes
 

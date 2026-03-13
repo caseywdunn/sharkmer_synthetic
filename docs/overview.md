@@ -49,12 +49,13 @@ cat nuclear_R1.fastq mt_R1.fastq | sharkmer --pcr cnidaria -s <sample_name> -o <
 
 The cnidarian panel targets five loci: 16s, co1, 18s, 28s, ITSfull.
 
-## 16S Comparison
+## Amplicon Comparison
 
-After sharkmer runs, the pipeline collects the `16s.fasta` amplicon from each
-result directory, labels each sequence with its sample name, and produces a
-multiple sequence alignment with MAFFT. The output is
-`results/compare_16s.fasta`.
+After sharkmer runs, the pipeline discovers all gene amplicon FASTA files across
+result directories, collects all products for each gene (not just the first),
+labels each sequence with its sample name, and produces a per-gene multiple
+sequence alignment with MAFFT. Outputs are named
+`results/compare_<gene>.fasta` (e.g., `results/compare_cnidaria_16S.fasta`).
 
 ## Directory Layout
 
@@ -78,5 +79,5 @@ sharkmer_synthetic/
 └── results/                 # sharkmer output
     ├── original/            # nuclear + original mt
     ├── <variant>/           # nuclear + variant mt
-    └── compare_16s.fasta    # MAFFT alignment of 16S across all samples
+    └── compare_<gene>.fasta  # MAFFT alignment per gene across all samples
 ```

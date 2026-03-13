@@ -212,42 +212,74 @@ _run_sharkmer_for() {
     log "sharkmer results saved to ${outdir}/"
 }
 
-# --- Step 8: Compare 16S amplicons across variants --------------------------
+# --- Step 8: Compare amplicons across variants ------------------------------
 
-compare_16s() {
-    local outfile="results/compare_16s.fasta"
-    if [[ -f "$outfile" ]]; then
-        log "16S comparison already exists, skipping"
-        return
-    fi
-
-    log "Collecting 16S amplicon sequences"
-    local combined
-    combined=$(mktemp)
-
-    # Collect *_16S.fasta from each result directory, prefixing headers with label
-    for dir in results/*/; do
-        local label
-        label="$(basename "$dir")"
-        local fasta
-        fasta=$(ls "${dir}"*_16S.fasta 2>/dev/null | head -1)
-        if [[ -n "$fasta" ]]; then
-            sed "s/^>/>$label /" "$fasta" >> "$combined"
-        else
-            log "Warning: no 16S fasta in ${dir}, skipping"
+compare_amplicons() {
+    # Discover all gene names from fasta files in result directories.
+    # Files are named like: label_geneName.fasta (e.g., original_cnidaria_16S.fasta)
+    local -a genes=()
+    for fasta_file in results/*/*.fasta; do
+        [[ -f "$fasta_file" ]] || continue
+        local dir_label base gene
+        dir_label="$(basename "$(dirname "$fasta_file")")"
+        base="$(basename "$fasta_file" .fasta)"
+        # Strip the label prefix: filename is <label>_<gene>.fasta
+        gene="${base#"${dir_label}_"}"
+        # Deduplicate
+        local already=false
+        for g in "${genes[@]+"${genes[@]}"}"; do
+            if [[ "$g" == "$gene" ]]; then
+                already=true
+                break
+            fi
+        done
+        if ! $already; then
+            genes+=("$gene")
         fi
     done
 
+    if [[ ${#genes[@]} -eq 0 ]]; then
+        log "No amplicon fasta files found, skipping comparison"
+        return
+    fi
+
+    for gene in "${genes[@]}"; do
+        _compare_gene "$gene"
+    done
+}
+
+_compare_gene() {
+    local gene="$1"
+    local outfile="results/compare_${gene}.fasta"
+    if [[ -f "$outfile" ]]; then
+        log "Comparison for ${gene} already exists, skipping"
+        return
+    fi
+
+    log "Collecting ${gene} amplicon sequences (all products)"
+    local combined
+    combined=$(mktemp)
+
+    for dir in results/*/; do
+        local label
+        label="$(basename "$dir")"
+        # Collect all fasta files matching this gene for this label
+        for fasta in "${dir}"*_"${gene}".fasta; do
+            [[ -f "$fasta" ]] || continue
+            cat "$fasta" >> "$combined"
+        done
+    done
+
     if [[ ! -s "$combined" ]]; then
-        log "No 16S sequences found, skipping comparison"
+        log "No ${gene} sequences found, skipping comparison"
         rm -f "$combined"
         return
     fi
 
-    log "Aligning 16S sequences with MAFFT"
+    log "Aligning ${gene} sequences with MAFFT"
     mafft --auto "$combined" > "$outfile"
     rm -f "$combined"
-    log "16S alignment saved to ${outfile}"
+    log "${gene} alignment saved to ${outfile}"
 }
 
 # --- Main --------------------------------------------------------------------
@@ -263,7 +295,7 @@ main() {
     simulate_nuclear_reads
     simulate_mt_reads
     run_sharkmer
-    compare_16s
+    compare_amplicons
 
     log "Pipeline complete"
 }
