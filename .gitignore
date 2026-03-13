@@ -8,4 +8,5 @@ data/
 reads/
 
 # sharkmer output
-results/
+results/*
+!results/compare_cnidaria_16S.fasta
