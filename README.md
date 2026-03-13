@@ -18,6 +18,7 @@ conda env create -f environment.yml
 ## Usage
 
 ```bash
+conda activate sharkmer_synth
 ./synthesize.sh
 ```
 

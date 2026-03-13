@@ -205,10 +205,12 @@ _run_sharkmer_for() {
         return
     fi
 
-    log "Running sharkmer for '${label}'"
+    local logfile="${outdir}/sharkmer.log"
+    log "Running sharkmer for '${label}' (log: ${logfile})"
     mkdir -p "$outdir"
     cat reads/nuclear_R1.fastq "$mt_reads" \
-        | sharkmer --pcr cnidaria -s "$label" -o "$outdir" -t "$THREADS"
+        | sharkmer --pcr cnidaria -s "$label" -o "$outdir" -t "$THREADS" \
+        2>&1 | tee "$logfile"
     log "sharkmer results saved to ${outdir}/"
 }
 
