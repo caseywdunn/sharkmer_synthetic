@@ -46,7 +46,7 @@ results/
 └── <variant>/      # nuclear + variant mt (one per patches.tsv row)
 ```
 
-Each contains sharkmer amplicon assemblies (e.g., `16s.fasta`, `co1.fasta`)
+Each contains sharkmer amplicon assemblies (e.g., `16S.fasta`, `co1.fasta`)
 and kmer histograms.
 
 ## Documentation
