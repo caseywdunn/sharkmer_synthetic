@@ -1,5 +1,8 @@
 # sharkmer Synthetic Read Test Framework
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19021107.svg)](https://doi.org/10.5281/zenodo.19021107)
+
+
 Synthetic Illumina reads from *Porites lutea* nuclear and mitochondrial genomes
 to evaluate [sharkmer](https://github.com/caseywdunn/sharkmer) in silico PCR (sPCR)
 with the cnidarian primer panel.
